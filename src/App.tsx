@@ -122,7 +122,7 @@ function Principal() {
         <div className="bg-warn-soft px-4 py-1.5 text-center text-[13px] text-warn">Mode démo — données fictives, rien n'est partagé.</div>
       )}
       <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pt-3 sm:px-6">
+        <div className="mx-auto flex max-w-[1680px] items-center gap-3 px-4 pt-3 sm:px-6">
           <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" className="h-8 w-8 rounded-lg" />
           <span className="text-[16px] font-semibold">
             EK2L0 Prod <span className="hidden font-normal text-muted sm:inline">· Suivi Activités</span>
@@ -137,7 +137,7 @@ function Principal() {
             Déconnexion
           </button>
         </div>
-        <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-3 sm:px-5">
+        <nav className="mx-auto flex max-w-[1680px] gap-1 overflow-x-auto px-3 sm:px-5">
           {onglets.map((o) => (
             <button
               key={o.id}
@@ -151,7 +151,7 @@ function Principal() {
           ))}
         </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
+      <main className="mx-auto max-w-[1680px] px-4 py-5 sm:px-6">
         {actif === 'bord' && <TableauDeBord />}
         {(actif === 'Metz' || actif === 'Strasbourg') && <VueAgence key={actif} agence={actif} />}
         {actif === 'archives' && <VueArchives />}

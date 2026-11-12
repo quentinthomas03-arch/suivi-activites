@@ -5,6 +5,7 @@ import { today } from '../domain/dates';
 import { alertes, etape, libelleMetiers, type Alerte } from '../domain/rules';
 import { ETAPES, type Agence, type Intervention } from '../domain/types';
 import { POINT_ETAPE, PuceAlerte, PuceEtape } from '../ui/Statut';
+import { BoutonsAction } from '../data/useAction';
 import { FicheIntervention } from './FicheIntervention';
 
 interface Indicateurs {
@@ -124,7 +125,7 @@ export function TableauDeBord() {
             <ul className="divide-y divide-line/70">
               {prioritaires.map(({ i, a }) => (
                 <li key={i.id}>
-                  <button className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-surface-2" onClick={() => setOuverte(i)}>
+                  <div role="button" tabIndex={0} className="flex w-full cursor-pointer items-center gap-3 py-2.5 text-left hover:bg-surface-2" onClick={() => setOuverte(i)} onKeyDown={(e) => e.key === 'Enter' && setOuverte(i)}>
                     <PuceAlerte a={a} court />
                     <span className="min-w-0 flex-1 truncate">
                       <b className="font-medium">{i.client}</b>
@@ -136,7 +137,8 @@ export function TableauDeBord() {
                     <span className="hidden sm:block">
                       <PuceEtape etape={etape(i, auj)} />
                     </span>
-                  </button>
+                    <BoutonsAction i={i} compact />
+                  </div>
                 </li>
               ))}
             </ul>

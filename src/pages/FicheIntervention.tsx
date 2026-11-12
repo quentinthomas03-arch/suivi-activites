@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { agencesVisibles, estManager, peutModifier, useApp } from '../contexte';
 import { useClients } from '../data/hooks';
 import { fmt } from '../domain/dates';
+import { actionsPour } from '../domain/actions';
+import { today } from '../domain/dates';
 import { CASES, alertes, etape, evenements, prochaine, prochainControle, rapportPrevu, relancePrevue } from '../domain/rules';
 import {
   AGENCES,
@@ -278,6 +280,24 @@ export function FicheIntervention({ initiale, onFermer }: { initiale: Interventi
           {al.map((a) => (
             <PuceAlerte key={a.type} a={a} />
           ))}
+          {modifiable && !nouveau && (
+            <span className="ml-auto flex flex-wrap gap-1.5">
+              {actionsPour(i)
+                .filter((a) => !a.cloture)
+                .map((a, k) => (
+                  <button
+                    key={a.id}
+                    title={a.aide}
+                    disabled={enCours}
+                    onClick={() => enregistrer(a.appliquer(i, today()), { message: `${a.libelle} ✓` })}
+                    className={k === 0 ? 'btn-primaire !px-3 !py-1.5' : 'btn-secondaire !px-3 !py-1.5'}
+                  >
+                    {k === 0 ? '✓ ' : ''}
+                    {a.libelle}
+                  </button>
+                ))}
+            </span>
+          )}
         </div>
         <span className="label">Statut commercial</span>
         <div className="mb-3 inline-flex flex-wrap rounded-lg border border-line bg-surface-2 p-0.5">

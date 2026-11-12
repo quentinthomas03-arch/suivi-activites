@@ -5,6 +5,7 @@ import { fmt, today } from '../domain/dates';
 import { alertes, etape, libelleMetiers, prochaine, rapportPrevu, relancePrevue, type Alerte } from '../domain/rules';
 import { ETAPES, type Agence, type Etape, type Intervention } from '../domain/types';
 import { PuceAlerte, PuceEtape, POINT_ETAPE } from '../ui/Statut';
+import { BoutonsAction } from '../data/useAction';
 import { FicheIntervention } from './FicheIntervention';
 import { NouvelleDemande } from './NouvelleDemande';
 
@@ -200,6 +201,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                 {th('rapport', 'Rapport')}
                 {th('montant', 'Montant', 'text-right')}
                 {!archives && th('urgence', 'À traiter')}
+                {!archives && <th className="px-2.5 py-2 pr-4 font-semibold">Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -244,12 +246,17 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                   </td>
                   <td className={`whitespace-nowrap px-2.5 text-right tabular-nums ${pad}`}>{i.prixHT ? `${i.prixHT.toLocaleString('fr-FR')} €` : ''}</td>
                   {!archives && (
-                    <td className={`px-2.5 pr-4 ${pad}`}>
+                    <td className={`px-2.5 ${pad}`}>
                       <div className="flex gap-1">
                         {al.slice(0, 2).map((a) => (
                           <PuceAlerte key={a.type} a={a} court />
                         ))}
                       </div>
+                    </td>
+                  )}
+                  {!archives && (
+                    <td className={`px-2.5 pr-4 ${pad}`}>
+                      <BoutonsAction i={i} compact />
                     </td>
                   )}
                 </tr>
@@ -262,7 +269,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                     {lignes.length} ligne{lignes.length > 1 ? 's' : ''}
                   </td>
                   <td className="whitespace-nowrap px-2.5 py-2 text-right font-semibold tabular-nums text-ink">{totalMontant ? `${totalMontant.toLocaleString('fr-FR')} €` : ''}</td>
-                  {!archives && <td />}
+                  {!archives && <td colSpan={2} />}
                 </tr>
               </tfoot>
             )}
@@ -275,7 +282,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
       {/* Cartes (téléphone) */}
       <div className="space-y-2 md:hidden">
         {lignes.map(({ i, e, al }) => (
-          <button key={i.id} onClick={() => setOuverte(i)} className="card block w-full p-3.5 text-left">
+          <div key={i.id} role="button" tabIndex={0} onClick={() => setOuverte(i)} onKeyDown={(e) => e.key === 'Enter' && setOuverte(i)} className="card block w-full cursor-pointer p-3.5 text-left">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="truncate font-medium">{i.client}</div>
@@ -292,7 +299,10 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                 ))}
               </div>
             )}
-          </button>
+            <div className="mt-2">
+              <BoutonsAction i={i} />
+            </div>
+          </div>
         ))}
         {liste && lignes.length === 0 && <p className="py-10 text-center text-muted">Aucune intervention ne correspond aux filtres.</p>}
       </div>
