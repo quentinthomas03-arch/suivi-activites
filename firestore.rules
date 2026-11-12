@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Règles de sécurité Firestore : c'est ICI que se joue la protection des données.
+// À coller dans la console Firebase › Firestore › Règles (puis « Publier »).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function email() { return request.auth.token.email.lower(); }
+    function connecte() { return request.auth != null && request.auth.token.email_verified == true; }
+    function fiche() { return /databases/$(database)/documents/utilisateurs/$(email()); }
+    function actif() { return connecte() && exists(fiche()) && get(fiche()).data.actif == true; }
+    function role() { return get(fiche()).data.role; }
+    function manager() { return actif() && role() in ['manager', 'admin']; }
+    function admin() { return actif() && role() == 'admin'; }
+    // Un technicien ne voit et ne modifie que son agence ; « Toutes » = les deux.
+    function agenceOk(a) { return get(fiche()).data.agence == 'Toutes' || get(fiche()).data.agence == a; }
+    function agenceValide(a) { return a in ['Metz', 'Strasbourg']; }
+
+    // Personnes autorisées (identifiant = adresse e-mail en minuscules)
+    match /utilisateurs/{e} {
+      allow read: if connecte() && (e == email() || actif());
+      allow write: if admin();
+    }
+
+    match /interventions/{id} {
+      allow read: if actif() && agenceOk(resource.data.agence);
+      allow create: if actif() && agenceValide(request.resource.data.agence) && agenceOk(request.resource.data.agence);
+      allow update: if actif() && agenceOk(resource.data.agence)
+                    && agenceValide(request.resource.data.agence) && agenceOk(request.resource.data.agence);
+      allow delete: if admin();
+    }
+
+    match /clients/{id} {
+      allow read: if actif() && agenceOk(resource.data.agence);
+      allow create, update: if actif() && agenceValide(request.resource.data.agence) && agenceOk(request.resource.data.agence);
+      allow delete: if admin();
+    }
+
+    match /parametres/{d} {
+      allow read: if actif();
+      allow write: if admin();
+    }
+
+    // Journal : chacun ne peut écrire qu'en son nom, personne ne peut le modifier ni l'effacer.
+    match /journal/{id} {
+      allow read: if manager();
+      allow create: if actif() && request.resource.data.par == email();
+      allow update, delete: if false;
+    }
+  }
+}

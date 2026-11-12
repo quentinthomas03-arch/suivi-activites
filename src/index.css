@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Jetons de couleur — jetons de couleur (triplets RVB).
+ * Clair par défaut, sombre automatiquement selon le réglage du système.
+ * Contrastes vérifiés ≥ 4,5:1 pour le texte (muted sur surface inclus).
+ */
+:root {
+  --bg: 245 246 248;
+  --surface: 255 255 255;
+  --surface-2: 240 242 245;
+  --line: 227 230 234;
+  --ink: 21 25 30;
+  --muted: 91 100 112;
+  --accent: 14 94 111;
+  --accent-ink: 255 255 255;
+  --accent-soft: 230 241 243;
+  --accent-soft-ink: 11 63 74;
+  --warn: 154 52 18;
+  --warn-soft: 253 236 221;
+  --danger: 155 28 28;
+  --danger-soft: 251 228 228;
+  --ok: 30 107 58;
+  --ok-soft: 229 244 234;
+  color-scheme: light;
+}
+
+/* Sombre : automatique (réglage de l'iPhone) sauf si « clair » est forcé dans les réglages… */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: 14 17 20;
+    --surface: 23 27 32;
+    --surface-2: 30 35 41;
+    --line: 38 44 51;
+    --ink: 232 236 240;
+    --muted: 154 164 175;
+    --accent: 92 194 211;
+    --accent-ink: 6 41 44;
+    --accent-soft: 18 48 54;
+    --accent-soft-ink: 168 226 235;
+    --warn: 245 180 85;
+    --warn-soft: 52 34 14;
+    --danger: 255 138 128;
+    --danger-soft: 58 22 22;
+    --ok: 127 214 156;
+    --ok-soft: 19 36 26;
+    color-scheme: dark;
+  }
+}
+/* …ou forcé « sombre ». */
+:root[data-theme='dark'] {
+    --bg: 14 17 20;
+    --surface: 23 27 32;
+    --surface-2: 30 35 41;
+    --line: 38 44 51;
+    --ink: 232 236 240;
+    --muted: 154 164 175;
+    --accent: 92 194 211;
+    --accent-ink: 6 41 44;
+    --accent-soft: 18 48 54;
+    --accent-soft-ink: 168 226 235;
+    --warn: 245 180 85;
+    --warn-soft: 52 34 14;
+    --danger: 255 138 128;
+    --danger-soft: 58 22 22;
+    --ok: 127 214 156;
+    --ok-soft: 19 36 26;
+    color-scheme: dark;
+  }
+
+
+@layer base {
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--accent));
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-card border border-line/70 shadow-[0_1px_2px_rgba(16,24,32,0.05),0_4px_12px_-6px_rgba(16,24,32,0.08)];
+  }
+  .section-title {
+    @apply text-[12px] font-semibold uppercase tracking-[0.06em] text-muted;
+  }
+  .champ {
+    @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-[15px] text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-[12px] font-medium text-muted;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors disabled:opacity-50;
+  }
+  .btn-primaire {
+    @apply btn bg-accent text-accent-ink hover:opacity-90;
+  }
+  .btn-secondaire {
+    @apply btn border border-line bg-surface text-ink hover:bg-surface-2;
+  }
+  .btn-danger {
+    @apply btn text-danger hover:bg-danger-soft;
+  }
+  .puce {
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[12px] font-medium;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "interventions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "archive", "order": "ASCENDING" },
+        { "fieldPath": "agence", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
