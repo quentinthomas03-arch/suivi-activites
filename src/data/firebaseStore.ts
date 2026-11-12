@@ -18,7 +18,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { METIERS_DEFAUT, interventionVide, type Client, type EntreeJournal, type Intervention, type Metier, type Utilisateur } from '../domain/types';
+import { METIERS_DEFAUT, normaliser, type Client, type EntreeJournal, type Metier, type Utilisateur } from '../domain/types';
 import { differences } from '../domain/rules';
 import { libelle, type Store } from './store';
 
@@ -62,10 +62,7 @@ export function creerFirebaseStore(config: Record<string, string>): Store {
     watchInterventions(agences, archive, cb) {
       const q = query(collection(db, 'interventions'), where('archive', '==', archive), where('agence', 'in', agences));
       return onSnapshot(q, (s) =>
-        cb(s.docs.map((d) => {
-          const x = d.data() as Partial<Intervention>;
-          return { ...interventionVide(x.agence ?? 'Strasbourg'), ...x, id: d.id };
-        })),
+        cb(s.docs.map((d) => ({ ...normaliser(d.data()), id: d.id }))),
       );
     },
     async saveIntervention(i, par, avant) {
@@ -78,7 +75,7 @@ export function creerFirebaseStore(config: Record<string, string>): Store {
         id = ref.id;
         const n = { ...i, creeLe: maintenant, creePar: par, modifieLe: maintenant, modifiePar: par };
         batch.set(ref, sansId(n));
-        batch.set(journal, { date: maintenant, par, action: 'création', cible: id, libelle: libelle(n), details: `Statut : ${n.statut}` });
+        batch.set(journal, { date: maintenant, par, action: 'création', cible: id, libelle: libelle(n), details: `Statut : ${n.statutCommercial}` });
       } else {
         const n = { ...i, modifieLe: maintenant, modifiePar: par };
         batch.set(doc(db, 'interventions', id), sansId(n));

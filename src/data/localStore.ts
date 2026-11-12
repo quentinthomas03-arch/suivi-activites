@@ -1,5 +1,5 @@
 /** Store du MODE DÉMO : données fictives gardées dans le navigateur (localStorage). */
-import { METIERS_DEFAUT, type Client, type EntreeJournal, type Intervention, type Metier, type Utilisateur } from '../domain/types';
+import { METIERS_DEFAUT, normaliser, type Client, type EntreeJournal, type Intervention, type Metier, type Utilisateur } from '../domain/types';
 import { differences } from '../domain/rules';
 import { DEMO_EMAIL, demoUtilisateurs, genererDemo } from './demoData';
 import { libelle, type Compte, type Store } from './store';
@@ -13,12 +13,16 @@ interface Etat {
   connecte: boolean;
 }
 
-const CLE = 'suivi-activites-demo-v2';
+const CLE = 'suivi-activites-demo-v3';
 
 function charger(): Etat {
   try {
     const brut = localStorage.getItem(CLE);
-    if (brut) return JSON.parse(brut) as Etat;
+    if (brut) {
+      const e = JSON.parse(brut) as Etat;
+      e.interventions = e.interventions.map((i) => normaliser(i as unknown as Record<string, unknown>));
+      return e;
+    }
   } catch {
     /* stockage indisponible : on repart des données de démo */
   }
@@ -86,7 +90,7 @@ export function creerLocalStore(): Store {
       if (!i.id) {
         const n = { ...i, id: id(), creeLe: maintenant, creePar: par, modifieLe: maintenant, modifiePar: par };
         etat.interventions = [...etat.interventions, n];
-        journaliser({ par, action: 'création', cible: n.id, libelle: libelle(n), details: `Statut : ${n.statut}` });
+        journaliser({ par, action: 'création', cible: n.id, libelle: libelle(n), details: `Statut : ${n.statutCommercial}` });
         sauver();
         return n.id;
       }
@@ -135,7 +139,10 @@ export function creerLocalStore(): Store {
     async importer(interventions, clients, par, progression) {
       const ids = new Set(interventions.map((i) => i.id));
       const idc = new Set(clients.map((c) => c.id));
-      etat.interventions = [...etat.interventions.filter((i) => !ids.has(i.id)), ...interventions];
+      etat.interventions = [
+        ...etat.interventions.filter((i) => !ids.has(i.id)),
+        ...interventions.map((i) => normaliser(i as unknown as Record<string, unknown>)),
+      ];
       etat.clients = [...etat.clients.filter((c) => !idc.has(c.id)), ...clients];
       journaliser({ par, action: 'création', cible: 'import', libelle: 'Import', details: `${interventions.length} interventions, ${clients.length} clients` });
       sauver();

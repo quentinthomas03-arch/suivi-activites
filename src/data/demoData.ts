@@ -1,6 +1,6 @@
 /** Données FICTIVES pour le mode démo (aucun vrai client). */
 import { addDays, addMonths, today } from '../domain/dates';
-import type { Agence, Client, Intervention, Statut, Utilisateur } from '../domain/types';
+import type { Agence, Client, Intervention, Utilisateur } from '../domain/types';
 import { interventionVide } from '../domain/types';
 
 export const DEMO_EMAIL = 'demo@exemple.fr';
@@ -41,23 +41,27 @@ export function genererDemo(): { interventions: Intervention[]; clients: Client[
   const auj = today();
   const interventions: Intervention[] = [];
   let n = 0;
-  const scenario: { statut: Statut; decal: number }[] = [
-    { statut: 'Devis à faire', decal: -20 },
-    { statut: 'Devis à faire', decal: 25 },
-    { statut: 'Devis à faire', decal: 120 },
-    { statut: 'Devis envoyé', decal: -45 },
-    { statut: 'Devis envoyé', decal: -10 },
-    { statut: 'Commandé', decal: 15 },
-    { statut: 'Planifié', decal: 9 },
-    { statut: 'Planifié', decal: -3 },
-    { statut: 'Rapport en cours', decal: -20 },
-    { statut: 'Rapport en cours', decal: -60 },
-    { statut: 'Rapport envoyé', decal: -70 },
+  type Scenario = 'devis' | 'envoye' | 'aplanifier' | 'planifie' | 'encours' | 'attendu' | 'relecture' | 'transmis' | 'client';
+  const scenario: { s: Scenario; decal: number }[] = [
+    { s: 'devis', decal: -20 },
+    { s: 'devis', decal: 25 },
+    { s: 'devis', decal: 120 },
+    { s: 'envoye', decal: -45 },
+    { s: 'envoye', decal: -10 },
+    { s: 'aplanifier', decal: 15 },
+    { s: 'planifie', decal: 9 },
+    { s: 'encours', decal: 0 },
+    { s: 'attendu', decal: -20 },
+    { s: 'attendu', decal: -60 },
+    { s: 'relecture', decal: -30 },
+    { s: 'transmis', decal: -40 },
+    { s: 'client', decal: -70 },
   ];
+  const ORIG = ['Client direct', 'Hermès', 'SOCOTEC national', 'Service commercial'];
   CLIENTS.forEach(([client, ville, dpt, agence], ci) => {
     const nb = 1 + (ci % 3);
     for (let k = 0; k < nb; k++) {
-      const s = scenario[(ci * 3 + k) % scenario.length];
+      const sc = scenario[(ci * 3 + k) % scenario.length];
       const i = interventionVide(agence);
       const metier = METIERS[(ci + k) % METIERS.length];
       n++;
@@ -67,30 +71,36 @@ export function genererDemo(): { interventions: Intervention[]; clients: Client[
         client,
         ville,
         dpt,
+        origine: ORIG[n % ORIG.length],
         metiers: metier,
         reglementaire: ['R', '', 'NR'][n % 3],
         scola: metier.includes('VLEP') ? ['Saisi', 'À saisir', ''][n % 3] : '',
         intervenant: INTERV[agence][n % INTERV[agence].length],
-        statut: s.statut,
+        chefMission: INTERV[agence][(n + 1) % INTERV[agence].length],
+        statutCommercial: sc.s === 'devis' ? 'Devis à faire' : sc.s === 'envoye' ? 'Devis envoyé' : 'Commandé',
         creeLe: addDays(auj, -90),
         creePar: DEMO_EMAIL,
         modifieLe: auj,
         modifiePar: DEMO_EMAIL,
       } satisfies Partial<Intervention>);
-      const d = addDays(auj, s.decal);
-      if (s.statut === 'Devis à faire') i.echeance = d;
-      if (s.statut === 'Devis envoyé') i.dateEnvoiDevis = d;
-      if (['Commandé', 'Planifié', 'Rapport en cours', 'Rapport envoyé'].includes(s.statut)) {
+      const d = addDays(auj, sc.decal);
+      if (sc.s === 'devis' || sc.s === 'aplanifier') i.echeance = d;
+      if (sc.s === 'envoye') i.dateEnvoiDevis = d;
+      if (i.statutCommercial === 'Commandé') {
         i.dateEnvoiDevis = addDays(d, -40);
         i.prixHT = 1200 + ((n * 370) % 3800);
-        i.nbJours = 1 + (n % 3);
+        i.nbJoursPrevus = 1 + (n % 3);
       }
-      if (['Planifié', 'Rapport en cours', 'Rapport envoyé'].includes(s.statut)) {
-        i.dateDebut = addDays(d, -((i.nbJours ?? 1) - 1));
-        i.dateFin = d;
+      if (!['devis', 'envoye', 'aplanifier'].includes(sc.s)) {
+        i.dateFin = sc.s === 'encours' ? addDays(d, 1) : d;
+        i.dateDebut = addDays(d, -((i.nbJoursPrevus ?? 1) - 1));
       }
-      if (s.statut === 'Rapport envoyé') i.dateRapportEnvoye = addDays(d, 35);
-      if (s.statut === 'Commandé') i.echeance = d;
+      if (sc.s === 'relecture' || sc.s === 'transmis' || sc.s === 'client') i.enRelecture = true;
+      if (sc.s === 'transmis' || sc.s === 'client') {
+        i.rapportTransmis = true;
+        i.dateRapportEnvoye = addDays(d, 35);
+      }
+      if (sc.s === 'client') i.envoyeClient = true;
       interventions.push(i);
     }
   });
@@ -104,7 +114,11 @@ export function genererDemo(): { interventions: Intervention[]; clients: Client[
       client, ville, dpt,
       metiers: ['VLEP'],
       intervenant: INTERV[agence][0],
-      statut: k === 5 ? 'Perdu' : 'Clôturé',
+      statutCommercial: k === 5 ? 'Perdu' : 'Commandé',
+      enRelecture: k !== 5,
+      rapportTransmis: k !== 5,
+      envoyeClient: k !== 5,
+      facture: k !== 5,
       dateFin: k === 5 ? '' : fin,
       dateDebut: k === 5 ? '' : fin,
       dateRapportEnvoye: k === 5 ? '' : addDays(fin, 38),
