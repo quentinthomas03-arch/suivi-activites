@@ -7,6 +7,7 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   initializeFirestore,
   limit,
   onSnapshot,
@@ -123,6 +124,13 @@ export function creerFirebaseStore(config: Record<string, string>): Store {
     watchJournal(cb) {
       const q = query(collection(db, 'journal'), orderBy('date', 'desc'), limit(300));
       return onSnapshot(q, (s) => cb(s.docs.map((d) => ({ ...(d.data() as EntreeJournal), id: d.id }))));
+    },
+    async exporterTout() {
+      const out: Record<string, unknown[]> = {};
+      for (const c of ['interventions', 'clients', 'utilisateurs', 'parametres', 'journal']) {
+        out[c] = (await getDocs(collection(db, c))).docs.map((d) => ({ id: d.id, ...d.data() }));
+      }
+      return out;
     },
   };
 }

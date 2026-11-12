@@ -31,6 +31,9 @@ export interface Store {
   saveMetiers(l: Metier[]): Promise<void>;
 
   watchJournal(cb: (l: EntreeJournal[]) => void): Unsub;
+
+  /** Copie complète des données (sauvegarde). */
+  exporterTout(): Promise<Record<string, unknown[]>>;
 }
 
 export function libelle(i: Intervention): string {

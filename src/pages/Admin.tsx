@@ -17,6 +17,16 @@ export function Admin() {
   const [ouvert, setOuvert] = useState<Utilisateur | null>(null);
   const [m, setM] = useState<Metier[]>(metiers);
 
+  async function sauvegarder() {
+    const data = await store.exporterTout();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify({ date: new Date().toISOString(), ...data }, null, 1)], { type: 'application/json' }));
+    a.download = `sauvegarde-suivi-activites-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('Sauvegarde téléchargée.');
+  }
+
   async function enregistrerMetiers() {
     const propres = m.filter((x) => x.nom.trim()).map((x) => ({ nom: x.nom.trim(), periodiciteMois: Number(x.periodiciteMois) || 0 }));
     await store.saveMetiers(propres);
@@ -79,6 +89,13 @@ export function Admin() {
             <button className="btn-secondaire" onClick={() => setM([...m, { nom: '', periodiciteMois: 12 }])}>+ Métier</button>
             <button className="btn-primaire" onClick={enregistrerMetiers}>Enregistrer</button>
           </div>
+        </section>
+        <section className="card p-5">
+          <h2 className="mb-1 text-[16px] font-semibold">Sauvegarde</h2>
+          <p className="mb-3 text-[13px] text-muted">
+            Télécharge une copie complète de la base (fichier JSON). À faire chaque semaine et à garder dans un dossier sûr.
+          </p>
+          <button className="btn-secondaire" onClick={sauvegarder}>Télécharger la sauvegarde</button>
         </section>
         {store.mode === 'demo' && (
           <section className="card p-5">

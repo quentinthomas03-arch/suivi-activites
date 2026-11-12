@@ -132,5 +132,8 @@ export function creerLocalStore(): Store {
     watchJournal(cb) {
       return ecouter(() => cb(etat.journal));
     },
+    async exporterTout() {
+      return { interventions: etat.interventions, clients: etat.clients, utilisateurs: etat.utilisateurs, metiers: etat.metiers, journal: etat.journal };
+    },
   };
 }
