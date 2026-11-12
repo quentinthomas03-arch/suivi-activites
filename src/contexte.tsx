@@ -29,3 +29,11 @@ export function peutModifier(p: Utilisateur, agence: Agence): boolean {
 }
 
 export const estManager = (p: Utilisateur) => p.role === 'manager' || p.role === 'admin';
+
+/** L'intervenant d'une ligne correspond-il à la personne connectée ? (nom court, initiales ou prénom) */
+export function estMoi(p: Utilisateur, intervenant: string): boolean {
+  const x = intervenant.trim().toLowerCase();
+  if (!x) return false;
+  const prenom = p.nom.trim().split(/\s+/)[0]?.toLowerCase();
+  return x === p.initiales.trim().toLowerCase() || x === prenom;
+}

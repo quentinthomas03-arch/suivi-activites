@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { agencesVisibles, estManager, peutModifier, useApp } from '../contexte';
 import { fmt } from '../domain/dates';
 import { alertes, prochaine, prochainControle, rapportPrevu, relancePrevue } from '../domain/rules';
-import { AGENCES, STATUTS, STATUTS_FERMES, type Intervention, type Statut } from '../domain/types';
+import { AGENCES, REGLEMENTAIRE, SCOLA, STATUTS, STATUTS_FERMES, type Intervention, type Statut } from '../domain/types';
 import { PuceAlerte } from '../ui/Statut';
 import { Tiroir } from '../ui/Tiroir';
 import { toast } from '../ui/Toast';
@@ -45,6 +45,7 @@ export function FicheIntervention({ initiale, onFermer }: { initiale: Interventi
 
   async function enregistrer() {
     if (!i.client.trim()) return toast('Le client est obligatoire.');
+    if (i.metiers.length === 0) return toast('Choisis au moins une activité.');
     setEnCours(true);
     try {
       const n = { ...i, client: i.client.trim(), archive: STATUTS_FERMES.includes(i.statut) };
@@ -158,32 +159,55 @@ export function FicheIntervention({ initiale, onFermer }: { initiale: Interventi
       </Groupe>
 
       <Groupe titre="Mission">
-        <Champ label="Métier">
-          <select className="champ" value={i.metier} disabled={!modifiable} onChange={(e) => set('metier', e.target.value)}>
-            {metiers.map((m) => (
-              <option key={m.nom}>{m.nom}</option>
-            ))}
-          </select>
-        </Champ>
+        <div className="col-span-2">
+          <span className="label">Activités (plusieurs possibles)</span>
+          <div className="flex flex-wrap gap-1.5">
+            {[...metiers.map((m) => m.nom), ...i.metiers.filter((n) => !metiers.some((m) => m.nom === n))].map((n) => {
+              const on = i.metiers.includes(n);
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  disabled={!modifiable}
+                  onClick={() => set('metiers', on ? i.metiers.filter((x) => x !== n) : [...i.metiers, n])}
+                  className={`puce border py-1 ${on ? 'border-accent bg-accent-soft text-accent-soft-ink' : 'border-line bg-surface text-muted hover:text-ink'}`}
+                >
+                  {on ? '✓ ' : ''}
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <Champ label="Intervenant">
           <select className="champ" value={i.intervenant} disabled={!modifiable} onChange={(e) => set('intervenant', e.target.value)}>
             <option value="">—</option>
             {intervenants.map((u) => (
               <option key={u.email} value={u.initiales}>
-                {u.nom} ({u.initiales})
+                {u.initiales === u.nom ? u.nom : `${u.initiales} — ${u.nom}`}
               </option>
             ))}
             {i.intervenant && !intervenants.some((u) => u.initiales === i.intervenant) && <option value={i.intervenant}>{i.intervenant}</option>}
           </select>
         </Champ>
-        <div className="col-span-2 flex gap-5 text-[14px]">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={i.reglementaire} disabled={!modifiable} onChange={(e) => set('reglementaire', e.target.checked)} /> Réglementaire
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={i.scola} disabled={!modifiable} onChange={(e) => set('scola', e.target.checked)} /> Scola
-          </label>
-        </div>
+        <Champ label="Réglementaire">
+          <select className="champ" value={i.reglementaire} disabled={!modifiable} onChange={(e) => set('reglementaire', e.target.value)}>
+            {REGLEMENTAIRE.map((r) => (
+              <option key={r} value={r}>
+                {r === '' ? '—' : r === 'R' ? 'R (réglementaire)' : r === 'NR' ? 'NR (non réglementaire)' : 'CNR'}
+              </option>
+            ))}
+          </select>
+        </Champ>
+        <Champ label="Scola">
+          <select className="champ" value={i.scola} disabled={!modifiable} onChange={(e) => set('scola', e.target.value)}>
+            {SCOLA.map((r) => (
+              <option key={r} value={r}>
+                {r || '—'}
+              </option>
+            ))}
+          </select>
+        </Champ>
         <Champ label="Échéance de réalisation" aide="Date limite (contrôle périodique).">
           {date('echeance')}
         </Champ>

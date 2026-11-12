@@ -3,6 +3,7 @@ import { useApp } from '../contexte';
 import { reinitialiserDemo } from '../data/localStore';
 import { AGENCES, type Metier, type Role, type Utilisateur } from '../domain/types';
 import { Tiroir } from '../ui/Tiroir';
+import { Import } from './Import';
 import { toast } from '../ui/Toast';
 
 const ROLES: Record<Role, string> = { technicien: 'Technicien', manager: 'Manager', admin: 'Administrateur' };
@@ -90,6 +91,7 @@ export function Admin() {
             <button className="btn-primaire" onClick={enregistrerMetiers}>Enregistrer</button>
           </div>
         </section>
+        <Import />
         <section className="card p-5">
           <h2 className="mb-1 text-[16px] font-semibold">Sauvegarde</h2>
           <p className="mb-3 text-[13px] text-muted">
@@ -117,8 +119,8 @@ function FicheUtilisateur({ u: init, nouveau, onFermer }: { u: Utilisateur; nouv
   async function enregistrer() {
     const email = u.email.trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return toast('Adresse e-mail invalide.');
-    if (!u.nom.trim() || !u.initiales.trim()) return toast('Nom et initiales obligatoires.');
-    await store.saveUtilisateur({ ...u, email, nom: u.nom.trim(), initiales: u.initiales.trim().toUpperCase() });
+    if (!u.nom.trim() || !u.initiales.trim()) return toast('Nom et nom dans le suivi obligatoires.');
+    await store.saveUtilisateur({ ...u, email, nom: u.nom.trim(), initiales: u.initiales.trim() });
     toast('Accès enregistré.');
     onFermer();
   }
@@ -134,8 +136,8 @@ function FicheUtilisateur({ u: init, nouveau, onFermer }: { u: Utilisateur; nouv
           <input className="champ" value={u.nom} onChange={(e) => setU({ ...u, nom: e.target.value })} />
         </label>
         <label className="block">
-          <span className="label">Initiales</span>
-          <input className="champ" maxLength={4} value={u.initiales} onChange={(e) => setU({ ...u, initiales: e.target.value })} />
+          <span className="label">Nom dans le suivi</span>
+          <input className="champ" maxLength={20} placeholder="Prénom ou initiales" value={u.initiales} onChange={(e) => setU({ ...u, initiales: e.target.value })} />
         </label>
         <label className="block">
           <span className="label">Agence</span>

@@ -18,7 +18,7 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { METIERS_DEFAUT, type Client, type EntreeJournal, type Intervention, type Metier, type Utilisateur } from '../domain/types';
+import { METIERS_DEFAUT, interventionVide, type Client, type EntreeJournal, type Intervention, type Metier, type Utilisateur } from '../domain/types';
 import { differences } from '../domain/rules';
 import { libelle, type Store } from './store';
 
@@ -61,7 +61,12 @@ export function creerFirebaseStore(config: Record<string, string>): Store {
     },
     watchInterventions(agences, archive, cb) {
       const q = query(collection(db, 'interventions'), where('archive', '==', archive), where('agence', 'in', agences));
-      return onSnapshot(q, (s) => cb(s.docs.map((d) => ({ ...(d.data() as Intervention), id: d.id }))));
+      return onSnapshot(q, (s) =>
+        cb(s.docs.map((d) => {
+          const x = d.data() as Partial<Intervention>;
+          return { ...interventionVide(x.agence ?? 'Strasbourg'), ...x, id: d.id };
+        })),
+      );
     },
     async saveIntervention(i, par, avant) {
       const maintenant = new Date().toISOString();
@@ -124,6 +129,23 @@ export function creerFirebaseStore(config: Record<string, string>): Store {
     watchJournal(cb) {
       const q = query(collection(db, 'journal'), orderBy('date', 'desc'), limit(300));
       return onSnapshot(q, (s) => cb(s.docs.map((d) => ({ ...(d.data() as EntreeJournal), id: d.id }))));
+    },
+    async importer(interventions, clients, par, progression) {
+      const ops: [string, { id: string }][] = [
+        ...interventions.map((i) => ['interventions', i] as [string, { id: string }]),
+        ...clients.map((c) => ['clients', c] as [string, { id: string }]),
+      ];
+      const total = ops.length;
+      for (let k = 0; k < total; k += 400) {
+        const batch = writeBatch(db);
+        for (const [col, o] of ops.slice(k, k + 400)) batch.set(doc(db, col, o.id), sansId(o));
+        await batch.commit();
+        progression(Math.min(k + 400, total), total);
+      }
+      await addDoc(collection(db, 'journal'), {
+        date: new Date().toISOString(), par, action: 'création', cible: 'import', libelle: 'Import',
+        details: `${interventions.length} interventions, ${clients.length} clients`,
+      });
     },
     async exporterTout() {
       const out: Record<string, unknown[]> = {};

@@ -10,9 +10,13 @@ export const DELAI_RELANCE_JOURS = 30;
 export const DELAI_RAPPORT_JOURS = 42;
 export const HORIZON_A_VENIR_JOURS = 60;
 
-export function periodicite(metiers: Metier[], nom: string): number {
-  return metiers.find((m) => m.nom === nom)?.periodiciteMois ?? 12;
+/** Périodicité d'une mission : la plus courte parmi ses activités (0 = pas de contrôle périodique). */
+export function periodicite(metiers: Metier[], noms: string[]): number {
+  const p = noms.map((n) => metiers.find((m) => m.nom === n)?.periodiciteMois ?? 0).filter((x) => x > 0);
+  return p.length ? Math.min(...p) : 0;
 }
+
+export const libelleMetiers = (i: { metiers: string[] }) => i.metiers.join(' + ') || '—';
 
 /** Date de relance : saisie à la main, sinon envoi du devis + 30 jours. */
 export function relancePrevue(i: Intervention): string {
@@ -28,7 +32,7 @@ export function rapportPrevu(i: Intervention): string {
 /** Prochaine intervention : saisie à la main, sinon fin + périodicité du métier. */
 export function prochaine(i: Intervention, metiers: Metier[]): string {
   if (i.prochaineManuelle) return i.prochaineManuelle;
-  const p = periodicite(metiers, i.metier);
+  const p = periodicite(metiers, i.metiers);
   return i.dateFin && p > 0 ? addMonths(i.dateFin, p) : '';
 }
 
@@ -104,7 +108,7 @@ const LIBELLES: Partial<Record<keyof Intervention, string>> = {
   client: 'Client',
   ville: 'Ville',
   dpt: 'Dpt',
-  metier: 'Métier',
+  metiers: 'Activités',
   reglementaire: 'Réglementaire',
   scola: 'Scola',
   intervenant: 'Intervenant',
@@ -126,7 +130,7 @@ const LIBELLES: Partial<Record<keyof Intervention, string>> = {
 export function differences(avant: Intervention, apres: Intervention): string {
   const champs: string[] = [];
   for (const k of Object.keys(LIBELLES) as (keyof Intervention)[]) {
-    if (String(avant[k] ?? '') !== String(apres[k] ?? '')) {
+    if (JSON.stringify(avant[k] ?? '') !== JSON.stringify(apres[k] ?? '')) {
       champs.push(`${LIBELLES[k]} : « ${avant[k] ?? ''} » → « ${apres[k] ?? ''} »`);
     }
   }

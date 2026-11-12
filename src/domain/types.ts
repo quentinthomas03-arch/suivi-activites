@@ -41,10 +41,10 @@ export interface Intervention {
   client: string;
   ville: string;
   dpt: string;
-  metier: string;
-  reglementaire: boolean;
-  scola: boolean;
-  intervenant: string; // initiales
+  metiers: string[]; // une mission peut couvrir plusieurs activités (ex. VLEP + Aération)
+  reglementaire: string; // '', 'R', 'NR', 'CNR'
+  scola: string; // '', 'À saisir', 'Saisi', 'Importé', 'Non importable'
+  intervenant: string; // nom court affiché (prénom ou initiales)
   statut: Statut;
   echeance: string; // date limite de réalisation (contrôles périodiques)
   dateEnvoiDevis: string;
@@ -91,9 +91,17 @@ export interface EntreeJournal {
 export const METIERS_DEFAUT: Metier[] = [
   { nom: 'VLEP', periodiciteMois: 12 },
   { nom: 'Aération', periodiciteMois: 12 },
+  { nom: 'Radon', periodiciteMois: 0 },
+  { nom: 'QAI', periodiciteMois: 0 },
   { nom: 'Bruit Opé', periodiciteMois: 12 },
   { nom: 'Bruit Env', periodiciteMois: 60 },
+  { nom: 'Vibrations', periodiciteMois: 0 },
+  { nom: 'Cartographie', periodiciteMois: 0 },
+  { nom: 'Éclairement', periodiciteMois: 0 },
 ];
+
+export const REGLEMENTAIRE = ['', 'R', 'NR', 'CNR'] as const;
+export const SCOLA = ['', 'À saisir', 'Saisi', 'Importé', 'Non importable'] as const;
 
 export function interventionVide(agence: Agence): Intervention {
   return {
@@ -103,9 +111,9 @@ export function interventionVide(agence: Agence): Intervention {
     client: '',
     ville: '',
     dpt: '',
-    metier: 'VLEP',
-    reglementaire: false,
-    scola: false,
+    metiers: ['VLEP'],
+    reglementaire: '',
+    scola: '',
     intervenant: '',
     statut: 'Devis à faire',
     echeance: '',

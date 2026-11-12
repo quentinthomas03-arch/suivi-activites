@@ -32,10 +32,13 @@ export interface Store {
 
   watchJournal(cb: (l: EntreeJournal[]) => void): Unsub;
 
+  /** Import en masse (ids fixes : réimporter le même fichier remplace au lieu de dupliquer). */
+  importer(interventions: Intervention[], clients: Client[], par: string, progression: (fait: number, total: number) => void): Promise<void>;
+
   /** Copie complète des données (sauvegarde). */
   exporterTout(): Promise<Record<string, unknown[]>>;
 }
 
 export function libelle(i: Intervention): string {
-  return `${i.client || 'Sans client'} — ${i.metier} (${i.agence})`;
+  return `${i.client || 'Sans client'} — ${i.metiers.join(' + ')} (${i.agence})`;
 }

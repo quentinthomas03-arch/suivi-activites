@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { estManager, peutModifier, useApp } from '../contexte';
+import { estMoi, estManager, peutModifier, useApp } from '../contexte';
 import { telechargerCsv } from '../domain/csv';
 import { fmt, today } from '../domain/dates';
-import { alertes, prochaine, relancePrevue } from '../domain/rules';
+import { alertes, libelleMetiers, prochaine, relancePrevue } from '../domain/rules';
 import { STATUTS, interventionVide, type Agence, type Intervention } from '../domain/types';
 import { PuceAlerte, PuceStatut } from '../ui/Statut';
 import { FicheIntervention } from './FicheIntervention';
@@ -36,10 +36,10 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
     return liste
       .map((i) => ({ i, al: alertes(i, auj) }))
       .filter(({ i, al }) => {
-        if (metier && i.metier !== metier) return false;
+        if (metier && !i.metiers.includes(metier)) return false;
         if (statut && i.statut !== statut) return false;
         if (intervenant && i.intervenant !== intervenant) return false;
-        if (mesMissions && i.intervenant !== profil.initiales) return false;
+        if (mesMissions && !estMoi(profil, i.intervenant)) return false;
         if (alerteSeule && al.length === 0) return false;
         if (t && !`${i.client} ${i.ville} ${i.dpt} ${i.numAffaire} ${i.commentaire}`.toLowerCase().includes(t)) return false;
         return true;
@@ -64,7 +64,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
       `suivi-${agence ?? 'archives'}-${auj}.csv`,
       ['Agence', 'N° affaire', 'Client', 'Ville', 'Dpt', 'Métier', 'Réglementaire', 'Scola', 'Intervenant', 'Statut', 'Échéance', 'Envoi devis', 'Relance', 'Relance faite', 'Début', 'Fin', 'Nb jours', 'Prix HT', 'Rapport envoyé', 'Prochaine', 'Commentaire'],
       lignes.map(({ i }) => [
-        i.agence, i.numAffaire, i.client, i.ville, i.dpt, i.metier, i.reglementaire, i.scola, i.intervenant, i.statut,
+        i.agence, i.numAffaire, i.client, i.ville, i.dpt, i.metiers.join(' + '), i.reglementaire, i.scola, i.intervenant, i.statut,
         fmt(i.echeance), fmt(i.dateEnvoiDevis), fmt(relancePrevue(i)), i.relanceFaite, fmt(i.dateDebut), fmt(i.dateFin),
         i.nbJours, i.prixHT, fmt(i.dateRapportEnvoye), fmt(prochaine(i, metiers)), i.commentaire,
       ]),
@@ -108,13 +108,13 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-1.5">
-        {['', ...metiers.map((m) => m.nom)].map((m) => (
+        {['', ...metiers.map((m) => m.nom).filter((n) => (liste ?? []).some((i) => i.metiers.includes(n)))].map((m) => (
           <button
             key={m || 'tous'}
             onClick={() => setMetier(m)}
             className={`puce border py-1 ${metier === m ? 'border-accent bg-accent-soft text-accent-soft-ink' : 'border-line bg-surface text-muted hover:text-ink'}`}
           >
-            {m || 'Tous les métiers'}
+            {m || 'Toutes les activités'}
           </button>
         ))}
         <span className="mx-1 h-5 w-px bg-line" />
@@ -122,7 +122,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
           onClick={() => setMesMissions((v) => !v)}
           className={`puce border py-1 ${mesMissions ? 'border-accent bg-accent-soft text-accent-soft-ink' : 'border-line bg-surface text-muted hover:text-ink'}`}
         >
-          Mes missions ({profil.initiales})
+          Mes missions
         </button>
         {!archives && (
           <button
@@ -143,7 +143,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
           <thead className="bg-surface-2 text-left text-[12px] text-muted">
             <tr>
               <th className="px-4 py-2.5">{enTete('client', 'Client')}</th>
-              <th className="px-3 py-2.5">Métier</th>
+              <th className="px-3 py-2.5">Activités</th>
               <th className="px-3 py-2.5">Interv.</th>
               <th className="px-3 py-2.5">{enTete('statut', 'Statut')}</th>
               <th className="px-3 py-2.5">{enTete('date', 'Date')}</th>
@@ -161,11 +161,11 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                     <div className="text-[12px] text-muted">
                       {[i.ville, i.dpt && `(${i.dpt})`].filter(Boolean).join(' ')}
                       {!agence && ` · ${i.agence}`}
-                      {i.reglementaire && ' · Réglementaire'}
-                      {i.scola && ' · Scola'}
+                      {i.reglementaire && ` · ${i.reglementaire}`}
+                      {i.scola && ` · Scola ${i.scola.toLowerCase()}`}
                     </div>
                   </td>
-                  <td className="px-3 py-2.5">{i.metier}</td>
+                  <td className="px-3 py-2.5">{libelleMetiers(i)}</td>
                   <td className="px-3 py-2.5 font-semibold tracking-wide [font-variant-ligatures:none] text-[13px]">{i.intervenant || '—'}</td>
                   <td className="px-3 py-2.5">
                     <PuceStatut statut={i.statut} />
@@ -191,7 +191,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                       </div>
                     )}
                   </td>
-                  <td className="px-4 py-2.5 text-right tabular-nums">{i.prixHT ? `${i.prixHT.toLocaleString('fr-FR')} €` : ''}</td>
+                  <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums">{i.prixHT ? `${i.prixHT.toLocaleString('fr-FR')} €` : ''}</td>
                 </tr>
               );
             })}
@@ -210,7 +210,7 @@ export function ListeInterventions({ agence, liste, archives = false }: { agence
                 <div>
                   <div className="font-medium">{i.client}</div>
                   <div className="text-[12px] text-muted">
-                    {i.metier} · {i.intervenant || '—'} · {i.ville} {i.dpt && `(${i.dpt})`}
+                    {libelleMetiers(i)} · {i.intervenant || '—'} · {i.ville} {i.dpt && `(${i.dpt})`}
                   </div>
                 </div>
                 <PuceStatut statut={i.statut} />

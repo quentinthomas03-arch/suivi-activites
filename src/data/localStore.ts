@@ -13,7 +13,7 @@ interface Etat {
   connecte: boolean;
 }
 
-const CLE = 'suivi-activites-demo-v1';
+const CLE = 'suivi-activites-demo-v2';
 
 function charger(): Etat {
   try {
@@ -131,6 +131,15 @@ export function creerLocalStore(): Store {
     },
     watchJournal(cb) {
       return ecouter(() => cb(etat.journal));
+    },
+    async importer(interventions, clients, par, progression) {
+      const ids = new Set(interventions.map((i) => i.id));
+      const idc = new Set(clients.map((c) => c.id));
+      etat.interventions = [...etat.interventions.filter((i) => !ids.has(i.id)), ...interventions];
+      etat.clients = [...etat.clients.filter((c) => !idc.has(c.id)), ...clients];
+      journaliser({ par, action: 'création', cible: 'import', libelle: 'Import', details: `${interventions.length} interventions, ${clients.length} clients` });
+      sauver();
+      progression(interventions.length + clients.length, interventions.length + clients.length);
     },
     async exporterTout() {
       return { interventions: etat.interventions, clients: etat.clients, utilisateurs: etat.utilisateurs, metiers: etat.metiers, journal: etat.journal };

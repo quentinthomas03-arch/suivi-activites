@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { agencesVisibles, useApp } from '../contexte';
 import { useInterventions } from '../data/hooks';
 import { today } from '../domain/dates';
-import { alertes, type Alerte } from '../domain/rules';
+import { alertes, libelleMetiers, type Alerte } from '../domain/rules';
 import { STATUTS, type Agence, type Intervention } from '../domain/types';
 import { POINT_STATUT, PuceAlerte, PuceStatut } from '../ui/Statut';
 import { FicheIntervention } from './FicheIntervention';
@@ -127,7 +127,7 @@ export function TableauDeBord() {
                       <b className="font-medium">{i.client}</b>
                       <span className="text-muted">
                         {' '}
-                        · {i.metier} · {i.agence} · {i.intervenant || '—'}
+                        · {libelleMetiers(i)} · {i.agence} · {i.intervenant || '—'}
                       </span>
                     </span>
                     <span className="hidden sm:block">

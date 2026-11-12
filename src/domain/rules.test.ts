@@ -7,8 +7,8 @@ const base = (p: Partial<Intervention>): Intervention => ({ ...interventionVide(
 
 describe('dates calculées', () => {
   it('prochaine = fin + périodicité du métier', () => {
-    expect(prochaine(base({ metier: 'VLEP', dateFin: '2025-01-09' }), METIERS_DEFAUT)).toBe('2026-01-09');
-    expect(prochaine(base({ metier: 'Bruit Env', dateFin: '2025-09-14' }), METIERS_DEFAUT)).toBe('2030-09-14');
+    expect(prochaine(base({ metiers: ['VLEP'], dateFin: '2025-01-09' }), METIERS_DEFAUT)).toBe('2026-01-09');
+    expect(prochaine(base({ metiers: ['Bruit Env'], dateFin: '2025-09-14' }), METIERS_DEFAUT)).toBe('2030-09-14');
   });
   it('une date saisie à la main n\'est jamais écrasée', () => {
     expect(prochaine(base({ dateFin: '2025-01-09', prochaineManuelle: '2025-07-01' }), METIERS_DEFAUT)).toBe('2025-07-01');
@@ -17,6 +17,10 @@ describe('dates calculées', () => {
   it('relance = envoi + 30 j ; rapport = fin + 42 j', () => {
     expect(relancePrevue(base({ dateEnvoiDevis: '2025-01-01' }))).toBe('2025-01-31');
     expect(rapportPrevu(base({ dateFin: '2025-01-09' }))).toBe('2025-02-20');
+  });
+  it('plusieurs activités : la périodicité la plus courte ; aucune = pas de prochaine', () => {
+    expect(prochaine(base({ metiers: ['Bruit Env', 'VLEP'], dateFin: '2025-01-09' }), METIERS_DEFAUT)).toBe('2026-01-09');
+    expect(prochaine(base({ metiers: ['Radon'], dateFin: '2025-01-09' }), METIERS_DEFAUT)).toBe('');
   });
   it('fin de mois', () => {
     expect(addMonths('2024-01-31', 1)).toBe('2024-02-29');
@@ -49,7 +53,7 @@ describe('alertes', () => {
 
 describe('prochain contrôle', () => {
   it('reprend client et métier, repart à « Devis à faire » avec l\'échéance', () => {
-    const n = prochainControle(base({ client: 'ACME', metier: 'VLEP', dateFin: '2026-03-10', prixHT: 2000, statut: 'Clôturé' }), METIERS_DEFAUT)!;
+    const n = prochainControle(base({ client: 'ACME', metiers: ['VLEP'], dateFin: '2026-03-10', prixHT: 2000, statut: 'Clôturé' }), METIERS_DEFAUT)!;
     expect(n.client).toBe('ACME');
     expect(n.statut).toBe('Devis à faire');
     expect(n.echeance).toBe('2027-03-10');

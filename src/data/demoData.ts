@@ -6,11 +6,11 @@ import { interventionVide } from '../domain/types';
 export const DEMO_EMAIL = 'demo@exemple.fr';
 
 export const demoUtilisateurs: Utilisateur[] = [
-  { email: DEMO_EMAIL, nom: 'Compte démo', initiales: 'QT', agence: 'Toutes', role: 'admin', actif: true },
-  { email: 'tech.metz@exemple.fr', nom: 'Benoît (exemple)', initiales: 'BM', agence: 'Metz', role: 'technicien', actif: true },
-  { email: 'tech.stras@exemple.fr', nom: 'Solène (exemple)', initiales: 'SR', agence: 'Strasbourg', role: 'technicien', actif: true },
-  { email: 'tech2.stras@exemple.fr', nom: 'Thomas (exemple)', initiales: 'TM', agence: 'Strasbourg', role: 'technicien', actif: true },
-  { email: 'manager@exemple.fr', nom: 'Manager (exemple)', initiales: 'MG', agence: 'Toutes', role: 'manager', actif: true },
+  { email: DEMO_EMAIL, nom: 'Compte démo', initiales: 'Quentin', agence: 'Toutes', role: 'admin', actif: true },
+  { email: 'tech.metz@exemple.fr', nom: 'Benoît (exemple)', initiales: 'Benoît', agence: 'Metz', role: 'technicien', actif: true },
+  { email: 'tech.stras@exemple.fr', nom: 'Solène (exemple)', initiales: 'Solène', agence: 'Strasbourg', role: 'technicien', actif: true },
+  { email: 'tech2.stras@exemple.fr', nom: 'Thomas (exemple)', initiales: 'Thomas', agence: 'Strasbourg', role: 'technicien', actif: true },
+  { email: 'manager@exemple.fr', nom: 'Manager (exemple)', initiales: 'Manager', agence: 'Toutes', role: 'manager', actif: true },
 ];
 
 const CLIENTS: [string, string, string, Agence][] = [
@@ -34,8 +34,8 @@ const CLIENTS: [string, string, string, Agence][] = [
   ['Traitement de Surface Est', 'Forbach', '57', 'Metz'],
 ];
 
-const METIERS = ['VLEP', 'VLEP', 'VLEP', 'Aération', 'Bruit Opé', 'Bruit Env'];
-const INTERV: Record<Agence, string[]> = { Metz: ['QT', 'BM'], Strasbourg: ['SR', 'TM', 'QT'] };
+const METIERS = [['VLEP'], ['VLEP', 'Aération'], ['VLEP'], ['Aération'], ['Bruit Opé'], ['Bruit Env'], ['Radon']];
+const INTERV: Record<Agence, string[]> = { Metz: ['Quentin', 'Benoît'], Strasbourg: ['Solène', 'Thomas', 'Quentin'] };
 
 export function genererDemo(): { interventions: Intervention[]; clients: Client[] } {
   const auj = today();
@@ -67,9 +67,9 @@ export function genererDemo(): { interventions: Intervention[]; clients: Client[
         client,
         ville,
         dpt,
-        metier,
-        reglementaire: n % 3 === 0,
-        scola: client.includes('Lycée') || client.includes('Collège'),
+        metiers: metier,
+        reglementaire: ['R', '', 'NR'][n % 3],
+        scola: metier.includes('VLEP') ? ['Saisi', 'À saisir', ''][n % 3] : '',
         intervenant: INTERV[agence][n % INTERV[agence].length],
         statut: s.statut,
         creeLe: addDays(auj, -90),
@@ -102,7 +102,7 @@ export function genererDemo(): { interventions: Intervention[]; clients: Client[
     Object.assign(i, {
       id: `demo-arch-${k}`,
       client, ville, dpt,
-      metier: 'VLEP',
+      metiers: ['VLEP'],
       intervenant: INTERV[agence][0],
       statut: k === 5 ? 'Perdu' : 'Clôturé',
       dateFin: k === 5 ? '' : fin,

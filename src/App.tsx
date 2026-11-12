@@ -79,8 +79,9 @@ function Connexion({ store }: { store: Store }) {
   const [erreur, setErreur] = useState('');
   return (
     <Ecran>
-      <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="mx-auto mb-4 h-14 w-14" />
-      <h1 className="text-[22px] font-semibold">Suivi Activités</h1>
+      <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="EK2L0 Prod" className="mx-auto mb-4 h-20 w-20 rounded-[22px] shadow-lg" />
+      <h1 className="text-[22px] font-semibold">EK2L0 Prod</h1>
+      <p className="text-[15px] font-medium">Suivi Activités</p>
       <p className="mt-1 text-muted">VLEP · Aération · Bruit — Metz &amp; Strasbourg</p>
       <button className="btn-primaire mt-6 w-full !py-2.5" onClick={() => store.login().catch((e: Error) => setErreur(e.message))}>
         {store.mode === 'demo' ? 'Entrer dans la démo' : 'Se connecter avec Google'}
@@ -122,8 +123,10 @@ function Principal() {
       )}
       <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 pt-3 sm:px-6">
-          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="h-7 w-7" />
-          <span className="text-[16px] font-semibold">Suivi Activités</span>
+          <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" className="h-8 w-8 rounded-lg" />
+          <span className="text-[16px] font-semibold">
+            EK2L0 Prod <span className="hidden font-normal text-muted sm:inline">· Suivi Activités</span>
+          </span>
           <span className="flex-1" />
           <span className="hidden text-right text-[12px] leading-tight text-muted sm:block">
             {profil.nom}
